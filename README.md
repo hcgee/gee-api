@@ -143,4 +143,7 @@
 ### mysql使用遇到的问题
     1.由于找不到VCRUNTIME140_1.dll，xxx解决方法
       https://blog.csdn.net/BangBrother/article/details/107064968
-    
+    2.ER_NOT_SUPPORTED_AUTH_MODE: Client does not support authentication protocol requested by server; consider upgrading MySQL client
+      // 更改加密方式：修改加密规则为普通模式，默认是严格加密模式
+      ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
+      // 'password'是你的数据库密码
