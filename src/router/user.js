@@ -2,7 +2,7 @@
  * @Author: huhanchi
  * @Date: 2022-03-09 14:14:24
  * @Last Modified by: huhanchi
- * @Last Modified time: 2022-03-10 21:55:32
+ * @Last Modified time: 2022-03-10 22:15:11
  */
 // 引入koa-router
 const KoaRouter = require("koa-router");
@@ -71,7 +71,7 @@ userRouter.post("/login", async (ctx) => {
         code: 200,
         msg: "登录成功",
         token,
-        username
+        username,
       };
     } else {
       ctx.body = {
@@ -92,28 +92,29 @@ userRouter.post("/login", async (ctx) => {
 userRouter.post("/logout", async (ctx) => {
   const { username } = ctx.request.body;
   const sql = `select * from user where ?`;
-  const values = {
+  const data = await query(sql, {
     username,
-  };
-
-  const data = await query(sql, values);
+  });
   if (data.length > 0) {
-    const clear_token_sql = `update user set token=null where ?`
-    const res = await query(clear_token_sql, {username});
-    if(!res.errno) {
+    const clear_token_sql = `update user set token=null where ?`;
+    const res = await query(clear_token_sql, { username });
+    if (!res.errno) {
       ctx.body = {
         msg: "退出成功",
         code: 200,
       };
-    }else {
+    } else {
       ctx.body = {
         msg: "退出失败",
         code: 500,
       };
     }
-    
+  }else {
+    ctx.body = {
+      msg: "暂无您的信息",
+      code: 400,
+    };
   }
-  
 });
 /**
  * 注册
