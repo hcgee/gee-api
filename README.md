@@ -1,4 +1,4 @@
-# koa2结合mysql的使用
+# koa2 结合 mysql 的使用
 
 ## 1. 初始化项目
 
@@ -114,10 +114,10 @@
     // 使用
     const mysql = require("mysql");
     const connection = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "123456",
-    database: "geechat",
+      host: "localhost",
+      user: "root",
+      password: "123456",
+      database: "geechat",
     });
 
     connection.connect();
@@ -129,7 +129,8 @@
 
     connection.end();
 
-## 8.下载并使用MYSQL
+## 8.下载并使用 MYSQL
+
     //下载地址: https://dev.mysql.com/downloads/mysql/
 
     // 使用管理员打开cmd，执行以下命令
@@ -140,10 +141,44 @@
     ps: 密码可以在安装mysql目录下的data文件夹下的以.err结尾的文件找到
     mysql> alter user 'root'@'localhost' identified by '123456'; // 重置密码
 
-### mysql使用遇到的问题
+### mysql 使用遇到的问题
+
     1.由于找不到VCRUNTIME140_1.dll，xxx解决方法
       https://blog.csdn.net/BangBrother/article/details/107064968
     2.ER_NOT_SUPPORTED_AUTH_MODE: Client does not support authentication protocol requested by server; consider upgrading MySQL client
       // 更改加密方式：修改加密规则为普通模式，默认是严格加密模式
       ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
       // 'password'是你的数据库密码
+
+## 8.使用 jsonwebtoken
+
+    1. 安装
+      npm i jsonwebtoken
+    2. 引入及使用
+      const secretOrPrivateKey = require("./token_secret");
+      const jwt = require("jsonwebtoken");
+
+      // 校验token
+      function verifyToken(token) {
+        let isToken = false;
+        jwt.verify(token, secretOrPrivateKey, (err, decode) => {
+          if (err) {
+            //时间失效的时候 || 伪造的token
+          } else {
+            isToken = true;
+          }
+        });
+        return isToken;
+      }
+      // 生成token
+      function signToken(payload, expiresIn) {
+        return jwt.sign(payload, secretOrPrivateKey, {
+          expiresIn, // 1小时过期  以秒为单位
+        });
+      }
+
+      module.exports = {
+        verifyToken,
+        signToken,
+      };
+
