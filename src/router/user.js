@@ -2,18 +2,29 @@
  * @Author: huhanchi
  * @Date: 2022-03-09 14:14:24
  * @Last Modified by: huhanchi
- * @Last Modified time: 2022-03-10 22:15:11
+ * @Last Modified time: 2022-03-14 22:41:15
  */
 // 引入koa-router
 const KoaRouter = require("koa-router");
 const userRouter = new KoaRouter({ prefix: "/user" });
 const query = require("./../mysql/db");
-const { QUERY_USER } = require("./../mysql/sql");
 const { signToken, verifyToken } = require("../utils/token");
 
 // user模块的路由中间件
 userRouter.post("/getUser", async (ctx) => {
-  const data = await query(QUERY_USER);
+  const { condition, status, pageSize, pageNo } = ctx.request.body;
+  let nick = condition ? `'%${condition}%'` : "'%%'";
+  let limit = (pageNo - 1) * pageSize;
+  let query_user_sql = "";
+  let res = [];
+  // status -1 全部  1 在线 0 不在线
+  if (status === -1) {
+    query_user_sql = `select * from user where nickname like ${nick} limit ${limit},?`;
+    res = await query(query_user_sql, [pageSize]);
+  } else {
+    query_user_sql = `select * from user where nickname like ${nick} and status=? limit ${limit},?`;
+    res = await query(query_user_sql, [status, pageSize]);
+  }
   const token = ctx.request.header.token;
   if (!token) {
     ctx.body = {
@@ -27,7 +38,7 @@ userRouter.post("/getUser", async (ctx) => {
   if (isToken) {
     ctx.body = {
       code: 200,
-      data,
+      data: res,
     };
   } else {
     ctx.body = {
@@ -64,7 +75,7 @@ userRouter.post("/login", async (ctx) => {
     if (user_res[0].password === password) {
       const payload = { username }; //生成token主体信息
       const token = signToken(payload, 3600);
-      const set_token_sql = `update user set token=? where username=?`;
+      const set_token_sql = `update user set token=?, status=1 where username=?`;
       const set_token_res = await query(set_token_sql, [token, username]);
       console.log(set_token_res);
       ctx.body = {
@@ -96,7 +107,7 @@ userRouter.post("/logout", async (ctx) => {
     username,
   });
   if (data.length > 0) {
-    const clear_token_sql = `update user set token=null where ?`;
+    const clear_token_sql = `update user set token=null,status=0 where ?`;
     const res = await query(clear_token_sql, { username });
     if (!res.errno) {
       ctx.body = {
@@ -109,7 +120,7 @@ userRouter.post("/logout", async (ctx) => {
         code: 500,
       };
     }
-  }else {
+  } else {
     ctx.body = {
       msg: "暂无您的信息",
       code: 400,
